@@ -78,7 +78,7 @@ def predict_target_by_dir(main_dir, augment_times=1):
     print("Global summary: {0}".format(global_summary))
 
 
-config.model = config.MODEL_INCEPTION_V3
-# train_model(10, 0, auto_load_finetune=True)
-predict_target_by_dir("/home/boreas/PycharmProjects/keras-oxford102/data/sorted/test/", 10)
-predict_target_by_paths(["/home/boreas/PycharmProjects/keras-oxford102/data/sorted/test/60/"], 10)
+config.model = config.MODEL_RESNET50
+train_model(10, 0, auto_load_finetune=True)
+predict_target_by_dir("/home/boreas/PycharmProjects/keras-oxford102/data/sorted/valid/", 1)
+predict_target_by_paths(["/home/boreas/Downloads/test_imgs/73/"], 1)

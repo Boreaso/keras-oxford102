@@ -45,7 +45,7 @@ def get_files(path):
         print('No images found by the given path')
         exit(1)
 
-    return files
+    return sorted(files)
 
 
 def get_inputs_and_trues(files):
@@ -67,27 +67,36 @@ def get_inputs_and_trues(files):
 
 
 def get_augment_predictions(inputs, augment_times):
-    idg = ImageDataGenerator(rotation_range=30.,
-                             shear_range=0.2,
-                             zoom_range=0.2,
-                             horizontal_flip=True)
-
-    # 对于每个输入进行augment_times倍数据增强
     augmented_inputs = []
-    for i, input in enumerate(inputs):
-        augmented_single = []
-        for j in range(augment_times):
-            temp = idg.random_transform(x=input)
-            augmented_single.append(temp)
-        augmented_inputs.append(augmented_single)
+    augmented_predictions = {"category": [], "probability": []}
 
-    # 进行集成判决
-    augmented_predictions = []
-    for i, augmented_input in enumerate(augmented_inputs):
-        out = model.predict(np.array(augmented_input))
-        single_predictions = np.argmax(out, axis=1)
-        max_prediction = Counter(single_predictions).most_common(1)[0][0]
-        augmented_predictions.append(max_prediction)
+    if (augment_times > 1):
+        idg = ImageDataGenerator(rotation_range=30.,
+                                 shear_range=0.2,
+                                 zoom_range=0.2,
+                                 horizontal_flip=True)
+
+        # 对于每个输入进行augment_times倍数据增强
+        for i, input in enumerate(inputs):
+            augmented_single = []
+            for j in range(augment_times):
+                temp = idg.random_transform(x=input)
+                augmented_single.append(temp)
+            augmented_inputs.append(augmented_single)
+
+        # 进行集成判决
+        for i, augmented_input in enumerate(augmented_inputs):
+            out = model.predict(np.array(augmented_input))
+            single_predictions_cat = np.argmax(out, axis=1)
+            single_predictions_pro = np.max(out, axis=1)
+            max_prediction_cat = Counter(single_predictions_cat).most_common(1)[0][0]
+            max_prediction_pro = np.array(single_predictions_pro[single_predictions_cat == max_prediction_cat]).mean()
+            augmented_predictions["category"].append(max_prediction_cat)
+            augmented_predictions["probability"].append(max_prediction_pro)
+    else:
+        out = model.predict(np.array(inputs))
+        augmented_predictions["category"] = np.argmax(out, axis=1)
+        augmented_predictions["probability"] = np.max(out, axis=1)
 
     return augmented_predictions
 
@@ -111,7 +120,8 @@ def predict(dir, iter_index=0, augment_times=1, print_detail=True, ):
         novelty_detection_clf = joblib.load(config.get_novelty_detection_model_path())
 
     y_trues = []
-    predictions = np.zeros(shape=(n_files,))
+    predictions_cat = np.zeros(shape=(n_files,))
+    predictions_pro = np.zeros(shape=(n_files,))
     nb_batch = int(np.ceil(n_files / float(args.batch_size)))
     for n in range(0, nb_batch):
         if print_detail: print('Batch {}'.format(n))
@@ -143,7 +153,8 @@ def predict(dir, iter_index=0, augment_times=1, print_detail=True, ):
             # out = model.predict(np.array(inputs))
             # end = time.clock()
             augmented_predictions = get_augment_predictions(inputs, augment_times)
-            predictions[n_from:n_to] = augmented_predictions
+            predictions_cat[n_from:n_to] = augmented_predictions["category"]
+            predictions_pro[n_from:n_to] = augmented_predictions["probability"]
             if print_detail: print('Prediction on batch {} took: {} s'.format(n, end - start))
 
     predict_stats = {}
@@ -151,19 +162,22 @@ def predict(dir, iter_index=0, augment_times=1, print_detail=True, ):
     predict_stats["summary"] = {"total": 0, "trues": 0, "falses": 0, "acc": 0}
 
     if not args.store_activations:
-        for i, p in enumerate(predictions):
+        for i, p in enumerate(predictions_cat):
             recognized_class = list(classes_in_keras_format.keys())[list(classes_in_keras_format.values()).index(p)]
-            if print_detail: print(
-                '| should be {} ({}:{}) -> predicted as {} ({}:{})'.format(y_trues[i],
-                                                                           files[i].split(os.sep)[-2],
-                                                                           labels_en[int(files[i].split(os.sep)[-2])],
-                                                                           p,
-                                                                           recognized_class,
-                                                                           labels_en[int(recognized_class)]))
-            if print_detail:
-                pass
+            if print_detail: print('[{}:{}] should be {} ({}:{}) -> predicted as {} ({}:{}), probability:{}'
+                                   .format("%02d" % i,
+                                           files[i].split(os.sep)[-1],
+                                           y_trues[i],
+                                           files[i].split(os.sep)[-2],
+                                           labels_en[int(files[i].split(os.sep)[-2])],
+                                           p,
+                                           recognized_class,
+                                           labels_en[int(recognized_class)],
+                                           predictions_pro[i]))
+
             predict_stats["detail"].append([y_trues[i], files[i].split(os.sep)[-2], p, recognized_class])
             predict_stats["summary"]["total"] += 1
+
             if (files[i].split(os.sep)[-2] == recognized_class + ""):
                 predict_stats["summary"]["trues"] += 1
             else:
@@ -172,10 +186,10 @@ def predict(dir, iter_index=0, augment_times=1, print_detail=True, ):
         predict_stats["summary"]["acc"] = float(predict_stats["summary"]["trues"]) / predict_stats["summary"]["total"]
 
         if args.accuracy:
-            if print_detail: print('Accuracy {}'.format(accuracy_score(y_true=y_trues, y_pred=predictions)))
+            if print_detail: print('Accuracy {}'.format(accuracy_score(y_true=y_trues, y_pred=predictions_cat)))
 
         if args.plot_confusion_matrix:
-            cnf_matrix = confusion_matrix(y_trues, predictions)
+            cnf_matrix = confusion_matrix(y_trues, predictions_cat)
             util.plot_confusion_matrix(cnf_matrix, config.classes, normalize=False)
             util.plot_confusion_matrix(cnf_matrix, config.classes, normalize=True)
 

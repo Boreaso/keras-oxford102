@@ -2,7 +2,6 @@
 *#
 .#*
 *.DS_Store
-data
 *.caffemodel
 *.solverstate
 gitpush.sh
@@ -12,3 +11,4 @@ gitpush.sh
 trained
 *.log
 lock
+data
