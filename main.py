@@ -29,7 +29,7 @@ import glob
 
 def train_model(num_epochs, freeze_layers_number, auto_load_finetune=False, visual=False):
     try:
-        print("start train...")
+        print("Training...")
         train.init()
         train.train(num_epochs, freeze_layers_number,
                     auto_load_finetune=auto_load_finetune,
@@ -78,7 +78,7 @@ def predict_target_by_dir(main_dir, augment_times=1):
     print("Global summary: {0}".format(global_summary))
 
 
-config.model = config.MODEL_RESNET50
+config.model = config.MODEL_XCEPTION
 train_model(10, 0, auto_load_finetune=True)
-predict_target_by_dir("/home/boreas/PycharmProjects/keras-oxford102/data/sorted/valid/", 1)
-predict_target_by_paths(["/home/boreas/Downloads/test_imgs/73/"], 1)
+predict_target_by_dir("/home/boreas/PycharmProjects/keras-oxford102/data/sorted/test/", 1)
+predict_target_by_paths(["/home/boreas/Downloads/DeepLearning/test_imgs/73/"], 1)

@@ -17,6 +17,7 @@ class BaseModel(object):
                  class_weight=None,
                  nb_epoch=1000,
                  freeze_layers_number=None):
+        print("Initializing {}".format(config.model))
         self.model = None
         self.class_weight = class_weight
         self.nb_epoch = nb_epoch

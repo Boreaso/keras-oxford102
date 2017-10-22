@@ -23,6 +23,7 @@ def parse_args():
                         choices=[config.MODEL_RESNET50,
                                  config.MODEL_RESNET152,
                                  config.MODEL_INCEPTION_V3,
+                                 config.MODEL_XCEPTION,
                                  config.MODEL_VGG16])
     parser.add_argument('--use_nn', action='store_true')
     args = parser.parse_args()

@@ -18,6 +18,7 @@ def parse_args():
         config.MODEL_RESNET50,
         config.MODEL_RESNET152,
         config.MODEL_INCEPTION_V3,
+        config.MODEL_XCEPTION,
         config.MODEL_VGG16])
     parser.add_argument('--nb_epoch', type=int, default=1000)
     parser.add_argument('--freeze_layers_number', type=int, help='will freeze the first N layers and unfreeze the rest')

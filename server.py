@@ -17,6 +17,7 @@ parser.add_argument('--model', type=str, required=True, help='Base model archite
                     choices=[config.MODEL_RESNET50,
                              config.MODEL_RESNET152,
                              config.MODEL_INCEPTION_V3,
+                             config.MODEL_XCEPTION,
                              config.MODEL_VGG16])
 args = parser.parse_args()
 config.model = args.model
