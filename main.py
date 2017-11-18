@@ -79,6 +79,6 @@ def predict_target_by_dir(main_dir, augment_times=1):
 
 
 config.model = config.MODEL_XCEPTION
-# train_model(5, 0, auto_load_finetune=True)
-predict_target_by_dir("/home/boreas/PycharmProjects/keras-oxford102/data/sorted/test/", 1)
-predict_target_by_paths(["/home/boreas/Downloads/DeepLearning/test_imgs/73/"], 1)
+train_model(5, 0, auto_load_finetune=True)
+predict_target_by_dir("data/sorted/test/", 1)
+# predict_target_by_paths(["/home/boreas/Downloads/DeepLearning/test_imgs/73/"], 1)
